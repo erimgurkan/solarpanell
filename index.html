@@ -7,48 +7,66 @@
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; }
         canvas { display: block; }
-        #ui-container {
+        #sidebar-right {
             position: absolute;
             top: 15px;
             right: 15px;
-            background: #1a1c1e;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: flex-end;
+            width: fit-content;
+            max-height: calc(100vh - 80px);
+            overflow-y: auto;
+            scrollbar-width: none;
+            z-index: 1000;
+        }
+        #sidebar-right::-webkit-scrollbar { display: none; }
+
+        #ui-container, #energy-hud, #hud-container, #azimuth-container {
+            position: relative;
+            top: auto;
+            right: auto;
+            left: auto;
+            background: rgba(26, 28, 30, 0.95);
             color: #e2e2e2;
-            padding: 15px;
-            border-radius: 6px;
-            font-family: 'Inter', 'Segoe UI', sans-serif;
+            padding: 10px;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
             border: 1px solid #333;
+            width: 160px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            pointer-events: auto;
             user-select: none;
-            width: 130px;
         }
         .ui-title { 
-            margin-bottom: 12px; 
+            margin-bottom: 8px; 
             font-weight: 600; 
-            font-size: 10px; 
+            font-size: 9px; 
             text-transform: uppercase; 
             letter-spacing: 0.8px; 
-            color: #888;
+            color: #e2e2e2;
             border-bottom: 1px solid #333;
-            padding-bottom: 6px;
+            padding-bottom: 4px;
         }
         .grid-info { 
-            font-size: 8px; 
+            font-size: 7.5px; 
             color: #555; 
             text-align: center;
             font-family: monospace;
             margin-top: -4px;
-            margin-bottom: 15px;
+            margin-bottom: 8px;
             opacity: 0.8;
         }
         .grid-selector {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 4px;
-            margin-bottom: 10px;
+            gap: 3px;
+            margin-bottom: 6px;
         }
         .grid-cell {
-            width: 32px;
-            height: 32px;
+            width: 28px;
+            height: 28px;
             background: #2a2d30;
             border: 1px solid #3f4245;
             border-radius: 2px;
@@ -64,30 +82,36 @@
             border-color: #6fb6ff; 
             box-shadow: inset 0 0 4px rgba(0,0,0,0.2);
         }
+        /* Mouse üzerindeyken seçili (mavi) olanları gizle */
+        .grid-selector:hover .grid-cell.active {
+            background: #2a2d30;
+            border-color: #3f4245;
+            box-shadow: none;
+        }
         .grid-cell.highlight { 
             background: #3e444b; 
             border-color: #4a9eff; 
         }
         .angle-control {
-            margin-top: 10px;
+            margin-top: 6px;
             text-align: center;
         }
         .angle-input-group {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 5px;
-            margin-bottom: 8px;
+            gap: 4px;
+            margin-bottom: 4px;
         }
         .angle-input {
             background: #2a2d30;
             border: 1px solid #3f4245;
             color: #4a9eff;
-            width: 45px;
-            font-size: 11px;
+            width: 40px;
+            font-size: 10px;
             text-align: center;
             border-radius: 2px;
-            padding: 3px;
+            padding: 2px;
             font-family: monospace;
         }
         .angle-slider {
@@ -97,47 +121,73 @@
             height: 3px;
         }
         .slider-label {
-            font-size: 10px;
+            font-size: 9px;
             color: #888;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             display: block;
             text-transform: uppercase;
             text-align: center;
             letter-spacing: 0.5px;
         }
 
-        /* --- LEFT HUD --- */
         #hud-container {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            background: rgba(26, 28, 30, 0.85);
-            color: #e2e2e2;
-            padding: 10px 15px;
-            border-radius: 4px;
-            font-family: 'JetBrains Mono', 'Courier New', monospace;
-            border-left: 3px solid #4a9eff;
-            pointer-events: none;
-            user-select: none;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
         }
-        .hud-label {
-            font-size: 9px;
+        #hud-container .hud-label {
+            font-size: 8px;
             color: #888;
             text-transform: uppercase;
             letter-spacing: 1px;
-            margin-bottom: 2px;
         }
-        .hud-value {
+        #hud-container .hud-value-row {
+            display: flex;
+            align-items: baseline;
+            gap: 2px;
+        }
+        #hud-container .hud-value {
             font-size: 16px;
-            font-weight: 500;
+            font-weight: 600;
             color: #4a9eff;
         }
-        .hud-unit {
+        #hud-container .hud-unit {
             font-size: 10px;
             color: #666;
-            margin-left: 2px;
         }
+        .hud-section { margin-bottom: 12px; }
+        .hud-section:last-child { margin-bottom: 0; }
+        .hud-section-title {
+            font-size: 8px;
+            color: #e2e2e2;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 4px;
+            margin-bottom: 6px;
+        }
+        .hud-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        .hud-label { font-size: 9px; color: #888; }
+        .hud-value { 
+            font-size: 10px; 
+            color: #4a9eff; 
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+        }
+        .hud-main-value {
+            font-size: 18px;
+            color: #4a9eff;
+            font-weight: 700;
+            margin-top: 5px;
+            text-align: center;
+        }
+        .hud-unit { font-size: 10px; color: #666; margin-left: 2px; }
         /* --- SETTINGS BUTTON --- */
         #settings-btn {
             position: absolute;
@@ -183,7 +233,12 @@
 
         #settings-modal {
             background: #1a1c1e;
-            width: 320px;
+            width: 90%;
+            max-width: 1200px;
+            height: auto;
+            max-height: 90%;
+            display: flex;
+            flex-direction: column;
             border-radius: 12px;
             border: 1px solid #333;
             box-shadow: 0 20px 40px rgba(0,0,0,0.6);
@@ -191,6 +246,7 @@
             transform: scale(0.8) translateY(20px);
             transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
             position: relative;
+            box-sizing: border-box;
         }
         #modal-overlay.active #settings-modal {
             transform: scale(1) translateY(0);
@@ -198,11 +254,13 @@
 
         .modal-header {
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
             margin-bottom: 20px;
             border-bottom: 1px solid #333;
             padding-bottom: 12px;
+            flex-shrink: 0;
+            position: relative;
         }
         .modal-title {
             font-family: 'Inter', sans-serif;
@@ -211,8 +269,13 @@
             text-transform: uppercase;
             letter-spacing: 1px;
             color: #e2e2e2;
+            text-align: center;
         }
         #close-modal {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
             background: none;
             border: none;
             color: #888;
@@ -225,47 +288,243 @@
         #close-modal:hover { color: #ff4a4a; }
 
         .modal-body {
-            min-height: 150px;
+            flex: 1;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            grid-template-rows: auto;
+            gap: 15px;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            align-content: start;
+        }
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            padding-top: 20px;
+            border-top: 1px solid #333;
+            margin-top: 10px;
+        }
+        .save-btn {
+            background: #4a9eff;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+        }
+        .save-btn:hover {
+            background: #6fb6ff;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(74, 158, 255, 0.3);
+        }
+        .save-btn:active {
+            transform: translateY(0);
+        }
+        .param-box {
+            background: #2a2d30;
+            border: 1px solid #3f4245;
+            border-radius: 6px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .param-box:hover {
+            border-color: #4a9eff;
+            background: #33363a;
+        }
+        .param-label {
+            font-size: 9px;
+            color: #ffffff;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .param-input {
+            background: #1a1c1e;
+            border: 1px solid #333;
+            color: #4a9eff;
+            padding: 4px;
+            border-radius: 4px;
+            font-size: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            width: 100%;
+            box-sizing: border-box;
+            outline: none;
+        }
+        .param-input-container {
             display: flex;
             align-items: center;
+            gap: 6px;
+        }
+        .param-value {
+            font-size: 8px;
+            color: #4a9eff;
+            font-family: 'JetBrains Mono', monospace;
+            min-width: 25px;
+            text-align: right;
+        }
+        /* Custom Slider Styling */
+        input[type=range].param-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 4px;
+            background: #1a1c1e;
+            border-radius: 2px;
+            outline: none;
+            border: 1px solid #333;
+        }
+        input[type=range].param-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            background: #4a9eff;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            transition: transform 0.1s;
+        }
+        input[type=range].param-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        /* --- DESKTOP ONLY WARNING --- */
+        #mobile-warning {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #0f1113;
+            z-index: 9999;
+            flex-direction: column;
+            align-items: center;
             justify-content: center;
-            color: #555;
-            font-size: 11px;
-            font-style: italic;
-            border: 1px dashed #333;
-            border-radius: 6px;
+            padding: 40px;
+            text-align: center;
+            font-family: 'Inter', sans-serif;
+            color: #e2e2e2;
+        }
+
+        @media (max-width: 1024px) {
+            #mobile-warning { display: flex; }
+            #sidebar-right, #settings-btn, #modal-overlay { display: none !important; }
+        }
+
+        .warning-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            color: #4a9eff;
+        }
+        .warning-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #fff;
+        }
+        .warning-text {
+            font-size: 16px;
+            color: #888;
+            line-height: 1.6;
+            max-width: 400px;
         }
     </style>
 </head>
 <body>
-    <div id="hud-container">
-        <div class="hud-label">Panel Surface Angle</div>
-        <div class="hud-value" id="angleDisplay">--.-</div><span class="hud-unit">°</span>
+    <div id="mobile-warning">
+        <div class="warning-icon">💻</div>
+        <div class="warning-title">Desktop Only Experience</div>
+        <div class="warning-text">
+            This simulation is designed for high-performance desktop browsers. 
+            Please switch to a computer for the best visual and technical experience.
+        </div>
     </div>
 
-    <div id="ui-container">
-        <div class="ui-title">Solar Array Layout</div>
-        <div class="grid-selector" id="gridSelector">
-            <!-- 3x3 Grid Cells -->
-            <div class="grid-cell" data-x="1" data-y="1"></div>
-            <div class="grid-cell" data-x="2" data-y="1"></div>
-            <div class="grid-cell" data-x="3" data-y="1"></div>
-            <div class="grid-cell" data-x="1" data-y="2"></div>
-            <div class="grid-cell" data-x="2" data-y="2"></div>
-            <div class="grid-cell" data-x="3" data-y="2"></div>
-            <div class="grid-cell" data-x="1" data-y="3"></div>
-            <div class="grid-cell" data-x="2" data-y="3"></div>
-            <div class="grid-cell" data-x="3" data-y="3"></div>
-        </div>
-        <div class="grid-info" id="gridInfo">Selection: 1 x 1</div>
-        <div class="slider-section">
-            <label class="slider-label">Sun Elevation Angle</label>
+    <div id="sidebar-right">
+        <!-- SOLAR ARRAY LAYOUT -->
+        <div id="ui-container">
+            <div class="ui-title">Solar Array Layout</div>
+            <div class="grid-selector" id="gridSelector">
+                <div class="grid-cell" data-x="1" data-y="1"></div>
+                <div class="grid-cell" data-x="2" data-y="1"></div>
+                <div class="grid-cell" data-x="3" data-y="1"></div>
+                <div class="grid-cell" data-x="1" data-y="2"></div>
+                <div class="grid-cell" data-x="2" data-y="2"></div>
+                <div class="grid-cell" data-x="3" data-y="2"></div>
+                <div class="grid-cell" data-x="1" data-y="3"></div>
+                <div class="grid-cell" data-x="2" data-y="3"></div>
+                <div class="grid-cell" data-x="3" data-y="3"></div>
+            </div>
+            <div class="grid-info" id="gridDisplay">Selection: 1 x 1</div>
+            
             <div class="angle-control">
+                <span class="slider-label">Sun Elevation Angle</span>
                 <div class="angle-input-group">
-                    <input type="number" id="sunAngleInput" class="angle-input" value="90" min="0" max="180">
+                    <input type="number" class="angle-input" id="angleInput" value="90" min="0" max="90">
                     <span style="font-size: 10px; color: #666;">DEG</span>
                 </div>
-                <input type="range" id="sunAngleSlider" class="angle-slider" min="0" max="180" step="0.5" value="90">
+                <input type="range" class="angle-slider" id="angleSlider" min="0" max="90" value="90">
+            </div>
+        </div>
+
+        <!-- ARRAY AZIMUTH (NEW) -->
+        <div id="azimuth-container">
+            <div class="ui-title">Array Azimuth</div>
+            <div class="angle-control">
+                <div class="angle-input-group">
+                    <input type="number" class="angle-input" id="azimuthInput" value="0" min="0" max="360">
+                    <span style="font-size: 10px; color: #666;">DEG</span>
+                </div>
+                <input type="range" class="angle-slider" id="azimuthSlider" min="0" max="360" value="0">
+            </div>
+        </div>
+
+        <!-- PANEL SURFACE ANGLE -->
+        <div id="hud-container">
+            <div class="hud-label">Panel Surface Angle</div>
+            <div class="hud-value-row">
+                <div class="hud-value" id="angleDisplay">--.-</div>
+                <span class="hud-unit">°</span>
+            </div>
+        </div>
+
+        <!-- ENERGY HUD -->
+        <div id="energy-hud">
+            <div class="hud-section">
+                <div class="hud-section-title">Solar Geometry</div>
+                <div class="hud-row"><span class="hud-label">Elevation:</span><span class="hud-value" id="hud-elev">0.0°</span></div>
+                <div class="hud-row"><span class="hud-label">AOI:</span><span class="hud-value" id="hud-aoi">0.0°</span></div>
+                <div class="hud-row" style="margin-top:4px; border-top:1px solid #333; padding-top:4px;"><span class="hud-label" style="font-size:8px;">SYSTEM METRICS:</span></div>
+                <div class="hud-row"><span class="hud-label">Capacity (STC):</span><span class="hud-value" id="hud-kwp" style="color:#6fb6ff">0.0 kWp</span></div>
+                <div class="hud-row"><span class="hud-label">1-Year Yield:</span><span class="hud-value" id="hud-yield12" style="color:#6fb6ff">0.0 MWh</span></div>
+            </div>
+            <div class="hud-section">
+                <div class="hud-section-title">Irradiance (W/m²)</div>
+                <div class="hud-row"><span class="hud-label">Beam:</span><span class="hud-value" id="hud-gb">0</span></div>
+                <div class="hud-row"><span class="hud-label">Diffuse:</span><span class="hud-value" id="hud-gd">0</span></div>
+                <div class="hud-row"><span class="hud-label">Albedo:</span><span class="hud-value" id="hud-gr">0</span></div>
+                <div class="hud-row" style="margin-top:2px; border-top:1px solid #222; padding-top:2px;">
+                    <span class="hud-label" style="font-weight: 600; color: #aaa;">Effective:</span>
+                    <span class="hud-value" id="hud-geff" style="color:#6fb6ff">0</span>
+                </div>
+            </div>
+            <div class="hud-section">
+                <div class="hud-section-title">System Metrics</div>
+                <div class="hud-row"><span class="hud-label">Cell Temp:</span><span class="hud-value" id="hud-tcell">25.0°C</span></div>
+                <div class="hud-row"><span class="hud-label">Eff. (Real):</span><span class="hud-value" id="hud-eff-real">20.0%</span></div>
+            </div>
+            <div class="hud-section" style="margin-top:8px;">
+                <div class="hud-section-title">Total Output Power</div>
+                <div class="hud-main-value" id="hud-pwr">0.00 <span class="hud-unit">kW</span></div>
             </div>
         </div>
     </div>
@@ -286,20 +545,120 @@
                 <button id="close-modal">&times;</button>
             </div>
             <div class="modal-body">
-                Configuration parameters will appear here.
+                <!-- Row 1 -->
+                <div class="param-box">
+                    <div class="param-label">CELL TYPE</div>
+                    <select class="param-input" id="param-cell-type">
+                        <option value="mono">Monocrystalline</option>
+                        <option value="poly">Polycrystalline</option>
+                        <option value="thin">Amorphous</option>
+                    </select>
+                </div>
+                <div class="param-box">
+                    <div class="param-label">Panel Efficiency</div>
+                    <div class="param-input-container">
+                        <input type="range" class="param-slider" id="param-efficiency" min="0" max="30" step="0.1" value="20">
+                        <span class="param-value" id="val-efficiency">20%</span>
+                    </div>
+                </div>
+                <div class="param-box">
+                    <div class="param-label">Panel Area</div>
+                    <div class="param-input-container">
+                        <input type="range" class="param-slider" id="param-area" min="0.5" max="10" step="0.1" value="2.0">
+                        <span class="param-value" id="val-area">2.0m²</span>
+                    </div>
+                </div>
+                <div class="param-box">
+                    <div class="param-label">Temp. Coefficient</div>
+                    <div class="param-input-container">
+                        <input type="range" class="param-slider" id="param-beta" min="-0.6" max="-0.1" step="0.01" value="-0.4">
+                        <span class="param-value" id="val-beta">-0.4%/°C</span>
+                    </div>
+                </div>
+                <div class="param-box">
+                    <div class="param-label">NOCT</div>
+                    <div class="param-input-container">
+                        <input type="number" class="param-input" id="param-noct" value="45" step="0.5" min="30" max="60">
+                        <span class="param-value">°C</span>
+                    </div>
+                </div>
+                <div class="param-box">
+                    <div class="param-label">Linke Turbidity</div>
+                    <div class="param-input-container">
+                        <input type="range" class="param-slider" id="param-turbidity" min="2" max="6" step="0.1" value="3">
+                        <span class="param-value" id="val-turbidity">3.0</span>
+                    </div>
+                </div>
+                <div class="param-box">
+                    <div class="param-label">Cloudiness</div>
+                    <div class="param-input-container">
+                        <input type="range" class="param-slider" id="param-cloud" min="0" max="1" step="0.01" value="0">
+                        <span class="param-value" id="val-cloud">0.00</span>
+                    </div>
+                </div>
+                <!-- Row 2 -->
+                <div class="param-box">
+                    <div class="param-label">Ambient Temp.</div>
+                    <div class="param-input-container">
+                        <input type="number" class="param-input" id="param-tamb" value="25" step="1" min="-20" max="50">
+                        <span class="param-value">°C</span>
+                    </div>
+                </div>
+                <div class="param-box">
+                    <div class="param-label">Ground Albedo</div>
+                    <select class="param-input" id="param-albedo">
+                        <option value="0.2">Grass (0.2)</option>
+                        <option value="0.35">Sand (0.35)</option>
+                        <option value="0.8">Snow (0.8)</option>
+                        <option value="0.1">Asphalt (0.1)</option>
+                    </select>
+                </div>
+                <div class="param-box">
+                    <div class="param-label">Inverter Eff.</div>
+                    <div class="param-input-container">
+                        <input type="range" class="param-slider" id="param-inv-eff" min="90" max="100" step="0.1" value="96">
+                        <span class="param-value" id="val-inv-eff">96%</span>
+                    </div>
+                </div>
+                <div class="param-box">
+                    <div class="param-label">Cable Loss</div>
+                    <div class="param-input-container">
+                        <input type="range" class="param-slider" id="param-cable-loss" min="0" max="5" step="0.1" value="2">
+                        <span class="param-value" id="val-cable-loss">2%</span>
+                    </div>
+                </div>
+                <div class="param-box">
+                    <div class="param-label">Shading Loss</div>
+                    <div class="param-input-container">
+                        <input type="range" class="param-slider" id="param-shade-loss" min="0" max="100" step="1" value="0">
+                        <span class="param-value" id="val-shade-loss">0%</span>
+                    </div>
+                </div>
+                <div class="param-box">
+                    <div class="param-label">Dirt Loss</div>
+                    <select class="param-input" id="param-dirt-loss">
+                        <option value="0">Clean (0%)</option>
+                        <option value="2">Light (2%)</option>
+                        <option value="5">Moderate (5%)</option>
+                        <option value="10">Heavy (10%)</option>
+                    </select>
+                </div>
+                <div class="param-box">
+                    <div class="param-label">Mismatch Loss</div>
+                    <div class="param-input-container">
+                        <input type="range" class="param-slider" id="param-mismatch-loss" min="0" max="5" step="0.1" value="2">
+                        <span class="param-value" id="val-mismatch-loss">2%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="save-btn" id="save-settings">SAVE</button>
             </div>
         </div>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script>
-        // --- GAME STATE ---
-        const keys = { w: false, a: false, s: false, d: false, shift: false };
-        let player, monster;
-        let gameOver = false;
-        const playerSpeed = 0.15;
-        const monsterSpeed = 0.08;
-
         // --- INITIALIZATION ---
         const scene = new THREE.Scene();
         let solarFieldGroup = new THREE.Group();
@@ -390,6 +749,7 @@
         // --- SOLAR CYCLE CONTROL (Angle Based) ---
         let currentAngle = 90;
         let targetAngle = 90;
+        let sunElevationRad = Math.PI / 2; // Initial sun elevation in radians (90 degrees)
 
         function updateSolarCycle(angle) {
             // angle: 0 (East) to 180 (West)
@@ -410,6 +770,10 @@
             // Işık şiddeti (90 derecede max)
             const sunIntensity = Math.max(0, Math.sin(rad)) * 1.8;
             sunLight.intensity = sunIntensity;
+
+            // Store actual solar elevation (angle from horizon: 0 to PI/2)
+            // rad goes from 0 to PI, but elevation peaks at 90 (PI/2)
+            sunElevationRad = Math.max(0, Math.asin(Math.min(1.0, Math.sin(rad))));
 
             // Sky Renkleri
             const dayTop = new THREE.Color(0x3366aa);
@@ -433,6 +797,9 @@
                 const t = (angle - 160) / 20;
                 currentTop = dayTop.clone().lerp(sunsetTop, t);
                 currentBottom = dayBottom.clone().lerp(sunsetBottom, t);
+            } else { // Night (angles outside 0-180 range, if any)
+                currentTop = nightTop;
+                currentBottom = nightBottom;
             }
 
             skyMat.uniforms.topColor.value.copy(currentTop);
@@ -782,12 +1149,112 @@
             return singlePanelGroup;
         }
 
-        function updateSolarPanels(gridX, gridY) {
-            const spacingX = 3.33; 
-            const spacingZ = 5.0; 
+        let lastGridX = 1;
+        let lastGridY = 1;
+        let panelArea = 2.0;   // m² (Standard 400W-500W panel size)
+        let tempCoeff = -0.4;  // %/°C
+        let panelAzimuth = 0;  // degrees
+        
+        // Simulation Parameters
+        let noct = 45;
+        let turbidity = 3.0; // Standard clear sky
+        let cloudiness = 0.0;
+        let ambientTemp = 25;
+        let groundAlbedo = 0.2;
+        let inverterEff = 0.96;
+        let cableLoss = 0.02;
+        let shadeLoss = 0.0;
+        let dirtLoss = 0.0;
+        let mismatchLoss = 0.02;
+
+        // --- PERSISTENCE ---
+        function saveToLocalStorage() {
+            const settings = {
+                cellType: document.getElementById('param-cell-type').value,
+                efficiency: document.getElementById('param-efficiency').value,
+                area: document.getElementById('param-area').value,
+                beta: document.getElementById('param-beta').value,
+                noct: document.getElementById('param-noct').value,
+                turbidity: document.getElementById('param-turbidity').value,
+                cloudiness: document.getElementById('param-cloud').value,
+                tamb: document.getElementById('param-tamb').value,
+                albedo: document.getElementById('param-albedo').value,
+                invEff: document.getElementById('param-inv-eff').value,
+                cableLoss: document.getElementById('param-cable-loss').value,
+                shadeLoss: document.getElementById('param-shade-loss').value,
+                dirtLoss: document.getElementById('param-dirt-loss').value,
+                mismatchLoss: document.getElementById('param-mismatch-loss').value
+            };
+            localStorage.setItem('solar_sim_settings', JSON.stringify(settings));
+        }
+
+        function loadFromLocalStorage() {
+            const saved = localStorage.getItem('solar_sim_settings');
+            if (saved) {
+                const s = JSON.parse(saved);
+                if(s.cellType) document.getElementById('param-cell-type').value = s.cellType;
+                if(s.efficiency) document.getElementById('param-efficiency').value = s.efficiency;
+                if(s.area) document.getElementById('param-area').value = s.area;
+                if(s.beta) document.getElementById('param-beta').value = s.beta;
+                if(s.noct) document.getElementById('param-noct').value = s.noct;
+                if(s.turbidity) document.getElementById('param-turbidity').value = s.turbidity;
+                if(s.cloudiness) document.getElementById('param-cloud').value = s.cloudiness;
+                if(s.tamb) document.getElementById('param-tamb').value = s.tamb;
+                if(s.albedo) document.getElementById('param-albedo').value = s.albedo;
+                if(s.invEff) document.getElementById('param-inv-eff').value = s.invEff;
+                if(s.cableLoss) document.getElementById('param-cable-loss').value = s.cableLoss;
+                if(s.shadeLoss) document.getElementById('param-shade-loss').value = s.shadeLoss;
+                if(s.dirtLoss) document.getElementById('param-dirt-loss').value = s.dirtLoss;
+                if(s.mismatchLoss) document.getElementById('param-mismatch-loss').value = s.mismatchLoss;
+                applySettingsToSimulation();
+                updateUIFromSimulation();
+            }
+        }
+
+        function applySettingsToSimulation() {
+            // Get values from DOM directly for "Save" operation
+            panelArea = parseFloat(document.getElementById('param-area').value);
+            tempCoeff = parseFloat(document.getElementById('param-beta').value);
+            noct = parseFloat(document.getElementById('param-noct').value);
+            turbidity = parseFloat(document.getElementById('param-turbidity').value);
+            cloudiness = parseFloat(document.getElementById('param-cloud').value);
+            ambientTemp = parseFloat(document.getElementById('param-tamb').value);
+            groundAlbedo = parseFloat(document.getElementById('param-albedo').value);
+            inverterEff = parseFloat(document.getElementById('param-inv-eff').value) / 100;
+            cableLoss = parseFloat(document.getElementById('param-cable-loss').value) / 100;
+            shadeLoss = parseFloat(document.getElementById('param-shade-loss').value) / 100;
+            dirtLoss = parseFloat(document.getElementById('param-dirt-loss').value) / 100;
+            mismatchLoss = parseFloat(document.getElementById('param-mismatch-loss').value) / 100;
             
-            const startX = -((gridX - 1) * spacingX) / 2;
-            const startZ = -((gridY - 1) * spacingZ) / 2;
+            updateSolarPanels(); // Area or position might have changed
+        }
+
+        function updateUIFromSimulation() {
+            // Sync all visual spans from current input values
+            document.getElementById('val-efficiency').textContent = document.getElementById('param-efficiency').value + '%';
+            document.getElementById('val-area').textContent = parseFloat(document.getElementById('param-area').value).toFixed(1) + 'm²';
+            document.getElementById('val-beta').textContent = parseFloat(document.getElementById('param-beta').value).toFixed(2) + '%/°C';
+            document.getElementById('val-turbidity').textContent = parseFloat(document.getElementById('param-turbidity').value).toFixed(1);
+            document.getElementById('val-cloud').textContent = parseFloat(document.getElementById('param-cloud').value).toFixed(2);
+            document.getElementById('val-inv-eff').textContent = document.getElementById('param-inv-eff').value + '%';
+            document.getElementById('val-cable-loss').textContent = document.getElementById('param-cable-loss').value + '%';
+            document.getElementById('val-shade-loss').textContent = document.getElementById('param-shade-loss').value + '%';
+            document.getElementById('val-mismatch-loss').textContent = document.getElementById('param-mismatch-loss').value + '%';
+        }
+
+        function updateSolarPanels(gridX, gridY) {
+            // Mevcut grid boyutlarını sakla (global olarak veya her seferinde hesapla)
+            const currentX = gridX || lastGridX || 1;
+            const currentY = gridY || lastGridY || 1;
+            lastGridX = currentX;
+            lastGridY = currentY;
+
+            const baseScale = Math.sqrt(panelArea / 16.65);
+            const spacingX = 3.33 * baseScale; 
+            const spacingZ = 5.0 * baseScale; 
+            
+            const startX = -((currentX - 1) * spacingX) / 2;
+            const startZ = -((currentY - 1) * spacingZ) / 2;
 
             // Mevcut panelleri tutan bir harita oluştur (objeleri korumak için)
             const currentPanels = {};
@@ -799,8 +1266,8 @@
 
             // Gerekli olan panelleri belirle
             const neededIds = new Set();
-            for (let i = 0; i < gridX; i++) {
-                for (let j = 0; j < gridY; j++) {
+            for (let i = 0; i < currentX; i++) {
+                for (let j = 0; j < currentY; j++) {
                     const tx = startX + (i * spacingX);
                     const tz = startZ + (j * spacingZ);
                     const id = `${tx.toFixed(2)}_${tz.toFixed(2)}`;
@@ -809,16 +1276,20 @@
                     if (currentPanels[id]) {
                         // Zaten var, hedef pozisyonu güncelle (sliding için)
                         currentPanels[id].userData.targetScale = 1;
+                        currentPanels[id].userData.areaScale = baseScale;
                         currentPanels[id].userData.targetX = tx;
                         currentPanels[id].userData.targetZ = tz;
+                        currentPanels[id].rotation.y = (panelAzimuth * Math.PI / 180);
                     } else {
                         // Yeni ekle
                         const panel = createSolarPanel(tx, tz);
                         panel.scale.set(0.001, 0.001, 0.001);
                         panel.userData.targetScale = 1;
+                        panel.userData.areaScale = baseScale;
                         panel.userData.targetX = tx;
                         panel.userData.targetZ = tz;
                         panel.userData.id = id;
+                        panel.rotation.y = (panelAzimuth * Math.PI / 180);
                         solarFieldGroup.add(panel);
                     }
                 }
@@ -833,74 +1304,6 @@
             });
         }
 
-        // --- PLAYER CHARACTER ---
-        function createPlayer() {
-            const group = new THREE.Group();
-            
-            // Body
-            const bodyGeo = new THREE.BoxGeometry(0.6, 0.8, 0.4);
-            const bodyMat = new THREE.MeshStandardMaterial({ color: 0x4a9eff, roughness: 0.7 });
-            const body = new THREE.Mesh(bodyGeo, bodyMat);
-            body.position.y = 1.1;
-            body.castShadow = true;
-            group.add(body);
-
-            // Head
-            const headGeo = new THREE.BoxGeometry(0.35, 0.35, 0.35);
-            const headMat = new THREE.MeshStandardMaterial({ color: 0xffdbac, roughness: 0.8 });
-            const head = new THREE.Mesh(headGeo, headMat);
-            head.position.y = 1.7;
-            head.castShadow = true;
-            group.add(head);
-
-            // Legs
-            const legGeo = new THREE.BoxGeometry(0.2, 0.7, 0.2);
-            const legMat = new THREE.MeshStandardMaterial({ color: 0x1a1c1e });
-            const legL = new THREE.Mesh(legGeo, legMat);
-            legL.position.set(-0.15, 0.35, 0);
-            legL.castShadow = true;
-            group.add(legL);
-
-            const legR = legL.clone();
-            legR.position.x = 0.15;
-            group.add(legR);
-
-            group.position.set(0, 0, 15);
-            scene.add(group);
-            return group;
-        }
-
-        // --- MONSTER ---
-        function createMonster() {
-            const geo = new THREE.IcosahedronGeometry(1.2, 0);
-            const mat = new THREE.MeshStandardMaterial({ 
-                color: 0x220000, 
-                flatShading: true,
-                emissive: 0xff0000,
-                emissiveIntensity: 0.5
-            });
-            const mesh = new THREE.Mesh(geo, mat);
-            
-            // Spikes
-            for (let i = 0; i < 15; i++) {
-                const hornGeo = new THREE.ConeGeometry(0.2, 0.8, 4);
-                const hornMat = new THREE.MeshStandardMaterial({ color: 0x000000 });
-                const horn = new THREE.Mesh(hornGeo, hornMat);
-                horn.position.set(
-                    (Math.random() - 0.5) * 1.5,
-                    (Math.random() - 0.5) * 1.5,
-                    (Math.random() - 0.5) * 1.5
-                );
-                horn.lookAt(0,0,0);
-                horn.rotateX(Math.PI);
-                mesh.add(horn);
-            }
-
-            mesh.position.set(30, 0.6, -30);
-            scene.add(mesh);
-            return mesh;
-        }
-
         // --- EXECUTION ---
         createGround();
         createMountains();
@@ -910,27 +1313,12 @@
         createGrass();
         createClouds();
         updateSolarPanels(1, 1);
-        player = createPlayer();
-        monster = createMonster();
-        controls.enabled = false; // Disable orbit controls for game mode
-
-        // --- INPUT LISTENERS ---
-        window.addEventListener('keydown', (e) => {
-            const key = e.key.toLowerCase();
-            if (keys.hasOwnProperty(key)) keys[key] = true;
-            if (e.shiftKey) keys.shift = true;
-        });
-        window.addEventListener('keyup', (e) => {
-            const key = e.key.toLowerCase();
-            if (keys.hasOwnProperty(key)) keys[key] = false;
-            if (!e.shiftKey) keys.shift = false;
-        });
 
         // --- UI Listeners (Grid Selector) ---
-        const cells = document.querySelectorAll('.grid-cell');
-        const info = document.getElementById('gridInfo');
+        const uiCells = document.querySelectorAll('.grid-cell');
+        const info = document.getElementById('gridDisplay');
 
-        cells.forEach(cell => {
+        uiCells.forEach(cell => {
             cell.addEventListener('mouseover', () => {
                 const tx = parseInt(cell.dataset.x);
                 const ty = parseInt(cell.dataset.y);
@@ -945,8 +1333,13 @@
             });
         });
 
+        // Mouse dışarı çıktığında önizlemeyi (highlight) temizle
+        document.getElementById('gridSelector').addEventListener('mouseleave', () => {
+            uiCells.forEach(c => c.classList.remove('highlight'));
+        });
+
         function highlightGrid(x, y) {
-            cells.forEach(c => {
+            uiCells.forEach(c => {
                 const cx = parseInt(c.dataset.x);
                 const cy = parseInt(c.dataset.y);
                 c.classList.toggle('highlight', cx <= x && cy <= y);
@@ -954,28 +1347,47 @@
             info.textContent = `Selection: ${x} x ${y}`;
         }
 
-        const angleInput = document.getElementById('sunAngleInput');
-        const angleSlider = document.getElementById('sunAngleSlider');
+        const sunAngleInput = document.getElementById('angleInput');
+        const sunAngleSlider = document.getElementById('angleSlider');
 
-        angleInput.addEventListener('change', (e) => {
+        sunAngleInput.addEventListener('change', (e) => {
             let val = parseFloat(e.target.value);
-            val = Math.max(0, Math.min(180, val));
+            val = Math.max(0, Math.min(90, val));
             e.target.value = val;
             targetAngle = val;
-            angleSlider.value = val;
+            sunAngleSlider.value = val;
         });
 
-        angleSlider.addEventListener('input', (e) => {
+        sunAngleSlider.addEventListener('input', (e) => {
             const val = parseFloat(e.target.value);
             targetAngle = val;
-            angleInput.value = val.toFixed(1);
+            sunAngleInput.value = val.toFixed(1);
+        });
+
+        const azInput = document.getElementById('azimuthInput');
+        const azSlider = document.getElementById('azimuthSlider');
+
+        azInput.addEventListener('change', (e) => {
+            let val = parseFloat(e.target.value);
+            val = Math.max(0, Math.min(360, val));
+            e.target.value = val;
+            panelAzimuth = val;
+            azSlider.value = val;
+            updateSolarPanels(); // Rotate visually
+        });
+
+        azSlider.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            panelAzimuth = val;
+            azInput.value = val;
+            updateSolarPanels(); // Rotate visually
         });
 
         // Başlangıç: 90 derece (Tepede)
         updateSolarCycle(90);
 
         function setActiveGrid(x, y) {
-            cells.forEach(c => {
+            uiCells.forEach(c => {
                 const cx = parseInt(c.dataset.x);
                 const cy = parseInt(c.dataset.y);
                 c.classList.toggle('active', cx <= x && cy <= y);
@@ -987,6 +1399,7 @@
         const modalOverlay = document.getElementById('modal-overlay');
         const closeModalBtn = document.getElementById('close-modal');
 
+        // Modal open/close with transactional behavior
         function openModal() {
             modalOverlay.style.display = 'flex';
             setTimeout(() => {
@@ -998,7 +1411,26 @@
             modalOverlay.classList.remove('active');
             setTimeout(() => {
                 modalOverlay.style.display = 'none';
-            }, 300); // Animation duration
+                // REVERT: Reset inputs to current saved simulation state
+                syncInputsFromGlobals();
+                updateUIFromSimulation();
+            }, 300);
+        }
+
+        function syncInputsFromGlobals() {
+            // Simulation state uses decimal (0.02) for losses, inputs use percentage (2)
+            document.getElementById('param-area').value = panelArea;
+            document.getElementById('param-beta').value = tempCoeff;
+            document.getElementById('param-noct').value = noct;
+            document.getElementById('param-turbidity').value = turbidity;
+            document.getElementById('param-cloud').value = cloudiness;
+            document.getElementById('param-tamb').value = ambientTemp;
+            document.getElementById('param-albedo').value = groundAlbedo;
+            document.getElementById('param-inv-eff').value = inverterEff * 100;
+            document.getElementById('param-cable-loss').value = cableLoss * 100;
+            document.getElementById('param-shade-loss').value = shadeLoss * 100;
+            document.getElementById('param-dirt-loss').value = dirtLoss * 100;
+            document.getElementById('param-mismatch-loss').value = mismatchLoss * 100;
         }
 
         settingsBtn.addEventListener('click', openModal);
@@ -1007,15 +1439,217 @@
             if (e.target === modalOverlay) closeModal();
         });
 
-        // Başlangıçta 1x1 aktif
+        // Save Button Listener
+        const saveBtn = document.getElementById('save-settings');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => {
+                applySettingsToSimulation();
+                saveToLocalStorage();
+                // Close modal after saving
+                modalOverlay.classList.remove('active');
+                setTimeout(() => { modalOverlay.style.display = 'none'; }, 300);
+            });
+        }
+
+        // --- Incremental UI Updates (Values only, no state change until Save) ---
+        const efficiencySlider = document.getElementById('param-efficiency');
+        const efficiencyVal = document.getElementById('val-efficiency');
+        if (efficiencySlider) {
+            efficiencySlider.addEventListener('input', (e) => {
+                efficiencyVal.textContent = e.target.value + '%';
+            });
+        }
+
+        const areaInput = document.getElementById('param-area');
+        const areaVal = document.getElementById('val-area');
+        if (areaInput) {
+            areaInput.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                if (val > 0 && areaVal) areaVal.textContent = val.toFixed(1) + 'm²';
+            });
+        }
+
+        const betaSlider = document.getElementById('param-beta');
+        const betaVal = document.getElementById('val-beta');
+        if (betaSlider) {
+            betaSlider.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                if (betaVal) betaVal.textContent = val.toFixed(2) + '%/°C';
+            });
+        }
+
+        // NOCT - No visual val to update
+        // Linke Turbidity
+        const turbiditySlider = document.getElementById('param-turbidity');
+        const turbidityVal = document.getElementById('val-turbidity');
+        if (turbiditySlider) {
+            turbiditySlider.addEventListener('input', (e) => {
+                if (turbidityVal) turbidityVal.textContent = parseFloat(e.target.value).toFixed(1);
+            });
+        }
+
+        // Cloudiness
+        const cloudSlider = document.getElementById('param-cloud');
+        const cloudVal = document.getElementById('val-cloud');
+        if (cloudSlider) {
+            cloudSlider.addEventListener('input', (e) => {
+                if (cloudVal) cloudVal.textContent = parseFloat(e.target.value).toFixed(2);
+            });
+        }
+
+        // Inverter Efficiency
+        const invEffSlider = document.getElementById('param-inv-eff');
+        const invEffVal = document.getElementById('val-inv-eff');
+        if (invEffSlider) {
+            invEffSlider.addEventListener('input', (e) => {
+                if (invEffVal) invEffVal.textContent = e.target.value + '%';
+            });
+        }
+
+        // Cable Loss
+        const cableLossSlider = document.getElementById('param-cable-loss');
+        const cableLossVal = document.getElementById('val-cable-loss');
+        if (cableLossSlider) {
+            cableLossSlider.addEventListener('input', (e) => {
+                if (cableLossVal) cableLossVal.textContent = e.target.value + '%';
+            });
+        }
+
+        // Shading Loss
+        const shadeLossSlider = document.getElementById('param-shade-loss');
+        const shadeLossVal = document.getElementById('val-shade-loss');
+        if (shadeLossSlider) {
+            shadeLossSlider.addEventListener('input', (e) => {
+                if (shadeLossVal) shadeLossVal.textContent = e.target.value + '%';
+            });
+        }
+
+        // Mismatch Loss
+        const mismatchLossSlider = document.getElementById('param-mismatch-loss');
+        const mismatchLossVal = document.getElementById('val-mismatch-loss');
+        if (mismatchLossSlider) {
+            mismatchLossSlider.addEventListener('input', (e) => {
+                if (mismatchLossVal) mismatchLossVal.textContent = e.target.value + '%';
+            });
+        }
+
+        // --- FINAL INITIALIZATION ---
+        loadFromLocalStorage(); // Initial load
         setActiveGrid(1, 1);
 
         let lastTime = 0;
+        const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
+
+        function updateEnergyPhysics() {
+            // Formula 1: Extraterrestrial (Go)
+            const Go = 1367 * (1 + 0.033 * Math.cos(2 * Math.PI * dayOfYear / 365));
+
+            // Solar Elevation Angle (alpha)
+            // sunElevationRad is the angle from the horizon (0 to PI/2)
+            const alpha = sunElevationRad; 
+            const sinAlpha = Math.sin(alpha);
+            const elevDeg = (alpha * 180 / Math.PI);
+            
+            // Formula 2: Beam Irradiance (Gb)
+            let Gb = 0;
+            if (sinAlpha > 0.01) { // Avoid division by zero or very small numbers near horizon
+                Gb = Go * Math.exp(-turbidity / (0.9 + 9.4 * sinAlpha));
+            }
+
+            // Formula 3: Diffuse Irradiance (Gd)
+            // Fix: Old formula was Gb * 0.2442 * turbidity which caused huge values.
+            // Better clear sky approximation: Gd is roughly 10% of Go for clear skies, 
+            // filtered by turbidity and air mass.
+            const Gd = Go * 0.1 * Math.exp(-turbidity / (0.9 + 9.4 * sinAlpha));
+
+            // Panel Geometry (Tilt beta = 60 deg from horizontal, Azimuth phi)
+            const beta = Math.PI / 3; 
+            const phi = panelAzimuth * Math.PI / 180;
+
+            // AOI (theta) - Dot Product of Sun VS Panel Normal
+            const sunDir = new THREE.Vector3().copy(sunLight.position).normalize();
+            
+            // Rotated normal: Original Normal is (0, sin(beta), cos(beta))
+            // Rotating it around Y by phi gives:
+            const nx = Math.cos(beta) * Math.sin(phi);
+            const ny = Math.sin(beta);
+            const nz = Math.cos(beta) * Math.cos(phi);
+            const panelNormal = new THREE.Vector3(nx, ny, nz).normalize();
+
+            const cosTheta = Math.max(0, sunDir.dot(panelNormal));
+            const thetaRad = Math.acos(cosTheta);
+            const thetaDeg = thetaRad * 180 / Math.PI;
+
+            // Formula 4: Ground Albedo (Gr)
+            const Gr = (Gb + Gd) * groundAlbedo * (1 - Math.cos(beta)) / 2;
+
+            // Formula 5: Total on Panel (Gpanel)
+            const Gpanel = (Gb * cosTheta) + (Gd * (1 + Math.cos(beta)) / 2) + Gr;
+
+            // Formula 6: Effective (Geff)
+            const Geff = Gpanel * (1 - 0.75 * Math.pow(cloudiness, 3.4));
+
+            // Formula 7: Cell Temperature (Tcell)
+            const Tcell = ambientTemp + (Geff * (noct - 20) / 800);
+
+            // Formula 8: Real Efficiency (eff_real)
+            const cellType = document.getElementById('param-cell-type').value;
+            let cellTypeMult = 1.0;
+            if (cellType === 'poly') cellTypeMult = 0.85;
+            if (cellType === 'thin') cellTypeMult = 0.60;
+
+            const baseEff = (parseFloat(document.getElementById('param-efficiency').value) / 100) * cellTypeMult;
+            const effReal = baseEff * (1 + (tempCoeff / 100) * (Tcell - 25));
+
+            // Formula 9: Performance Ratio (PR)
+            const pr = (1 - cableLoss) * inverterEff * (1 - shadeLoss) * (1 - dirtLoss) * (1 - mismatchLoss);
+
+            // Formula 10: Total Power (P)
+            const N = lastGridX * lastGridY;
+            const totalArea = panelArea * N;
+            const P = Geff * totalArea * effReal * pr;
+
+            // Yield Estimation (Fix: Using standard kWp based yield formula)
+            // Long term yield = System Capacity (kWp) * PSH * 365 * PR
+            const kwp = (totalArea * 1000 * baseEff) / 1000; // Peak capacity at 1000W/m2 (kWp)
+            
+            // Yearly avg PSH (Peak Sun Hours) ~ 4.2 adjusted by cloudiness
+            const pshAdj = 4.2 * (1 - 0.75 * Math.pow(cloudiness, 1.5));
+            
+            // Orientation Factor (Long term): Yield depends on fixed Azimuth, not current sun angle.
+            // Optimal Orientation is 0° (South). North (180°) is ~50% less efficient yearly.
+            const orientationFactor = 0.75 + 0.25 * Math.cos(phi);
+            
+            const yieldYearMWh = (kwp * pshAdj * 365 * pr * orientationFactor) / 1000;
+            
+            // Update HUD
+            document.getElementById('hud-elev').textContent = elevDeg.toFixed(1) + '°';
+            document.getElementById('hud-aoi').textContent = thetaDeg.toFixed(1) + '°';
+            document.getElementById('hud-gb').textContent = Math.round(Gb);
+            document.getElementById('hud-gd').textContent = Math.round(Gd);
+            document.getElementById('hud-gr').textContent = Math.round((Gb + Gd) * groundAlbedo * (1 - Math.cos(beta)) / 2);
+            document.getElementById('hud-geff').textContent = Math.round(Geff);
+            document.getElementById('hud-tcell').textContent = Tcell.toFixed(1) + '°C';
+            document.getElementById('hud-eff-real').textContent = (effReal * 100).toFixed(1) + '%';
+            
+            if (P > 1000) {
+                document.getElementById('hud-pwr').innerHTML = (P / 1000).toFixed(2) + ' <span class="hud-unit">kW</span>';
+            } else {
+                document.getElementById('hud-pwr').innerHTML = Math.round(P) + ' <span class="hud-unit">W</span>';
+            }
+
+            document.getElementById('hud-kwp').textContent = kwp.toFixed(2) + ' kWp';
+            document.getElementById('hud-yield12').textContent = yieldYearMWh.toFixed(2) + ' MWh';
+        }
+
         function animate(time) {
             const deltaTime = (time - lastTime) / 1000;
             lastTime = time;
 
             requestAnimationFrame(animate);
+            
+            // Solar Physics Update
+            updateEnergyPhysics();
 
             // Zaman geçişi (Lerp)
             if (Math.abs(currentAngle - targetAngle) > 0.01) {
@@ -1025,10 +1659,11 @@
 
             // Güneş paneli animasyonlarını güncelle
             solarFieldGroup.children.forEach((panel) => {
-                // 1. Ölçek animasyonu (Scaling)
+                // 1. Ölçek animasyonu (Scaling) - Area scale ile çarpıyoruz
                 const currentScale = panel.scale.x;
-                const targetScale = panel.userData.targetScale || 1;
-                const scaleStep = (targetScale - currentScale) * 0.1; // Lerp factor
+                const areaScale = panel.userData.areaScale || 1;
+                const targetScale = (panel.userData.targetScale || 1) * areaScale;
+                const scaleStep = (targetScale - currentScale) * 0.1;
                 panel.scale.set(currentScale + scaleStep, currentScale + scaleStep, currentScale + scaleStep);
 
                 // 2. Pozisyon animasyonu (Sliding)
@@ -1094,77 +1729,8 @@
                 angleDisplay.textContent = "--.-";
             }
             
-            // --- GAME UPDATES ---
-            if (!gameOver && player && monster) {
-                if (keys.w || keys.s || keys.a || keys.d) {
-                    // Get camera forward/right vectors (ignoring Y)
-                    const forward = new THREE.Vector3();
-                    camera.getWorldDirection(forward);
-                    forward.y = 0;
-                    forward.normalize();
+            controls.update();
 
-                    const right = new THREE.Vector3().crossVectors(camera.up, forward).normalize();
-                    right.negate(); // Correct for Three.js coordinate system
-
-                    const moveDir = new THREE.Vector3(0, 0, 0);
-                    if (keys.w) moveDir.add(forward);
-                    if (keys.s) moveDir.sub(forward);
-                    if (keys.a) moveDir.add(right);
-                    if (keys.d) moveDir.sub(right);
-
-                    if (moveDir.length() > 0) {
-                        moveDir.normalize();
-                        const actualSpeed = keys.shift ? playerSpeed * 1.8 : playerSpeed;
-
-                        // Rotate player to face move direction (Smoothly)
-                        const targetRotation = Math.atan2(moveDir.x, moveDir.z);
-                        player.rotation.y = targetRotation;
-
-                        player.position.addScaledVector(moveDir, actualSpeed);
-                    }
-                }
-
-                // Monster Chase (Simple AI)
-                const monsterDir = new THREE.Vector3().subVectors(player.position, monster.position).normalize();
-                monster.position.x += monsterDir.x * monsterSpeed;
-                monster.position.z += monsterDir.z * monsterSpeed;
-                monster.lookAt(player.position);
-                monster.position.y = 0.6 + Math.sin(time * 0.005) * 0.2; // Hover effect
-
-                // Catch Check
-                const dist = player.position.distanceTo(monster.position);
-                if (dist < 1.5) {
-                    gameOver = true;
-                    alert("YAKALANDIN! Canavar seni yedi.");
-                    location.reload(); 
-                }
-
-                // Camera Follow (Stable Third-Person)
-                const targetCameraHeight = 5;
-                const targetCameraDistance = 12;
-                
-                // Calculate ideal position based on player rotation
-                const playerRotationY = player.rotation.y;
-                const offsetX = Math.sin(playerRotationY) * targetCameraDistance;
-                const offsetZ = Math.cos(playerRotationY) * targetCameraDistance;
-                
-                const idealPosition = new THREE.Vector3(
-                    player.position.x - offsetX,
-                    player.position.y + targetCameraHeight,
-                    player.position.z - offsetZ
-                );
-
-                // Smoothly interpolate camera position
-                camera.position.lerp(idealPosition, 0.1);
-                
-                // Always look slightly above the player
-                const lookTarget = new THREE.Vector3(player.position.x, player.position.y + 1.5, player.position.z);
-                camera.lookAt(lookTarget);
-            } else if (!gameOver) {
-                controls.update(); // Sadece player yoksa veya oyun bitmemişse (başlangıç için)
-            }
-
-            // --- DECORATION UPDATES ---
             scene.children.forEach(obj => {
                 if (obj.userData.cloudSpeed) {
                     obj.position.x += obj.userData.cloudSpeed;
